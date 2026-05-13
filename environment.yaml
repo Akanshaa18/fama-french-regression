@@ -1,0 +1,15 @@
+name: stat230
+channels:
+  - defaults
+dependencies:
+  - python
+  - notebook
+  - pip:
+      - numpy
+      - pandas
+      - matplotlib
+      - scikit-learn
+      - jupyterlab
+      - yfinance==0.2.36
+      - curl_cffi
+prefix: /opt/anaconda3/envs/stat214

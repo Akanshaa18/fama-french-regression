@@ -1,0 +1,4 @@
+Comparison,Description,F-statistic,P-value,Conclusion
+CAPM -> FF3,Adding SMB and HML,327.6604,0.0,Significant p value
+FF3 -> FF3_Mom,Adding Momentum,0.6336,0.426,P value not significant
+FF3_Mom -> FF5_Mom,Adding RMW and CMA,10.5378,0.0,Significant p value

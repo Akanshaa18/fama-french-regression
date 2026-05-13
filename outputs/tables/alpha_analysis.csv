@@ -1,0 +1,5 @@
+Model,Alpha,Robust Model SE,P-value,Significance,CI lower,CI upper,Conclusion
+CAPM,-0.000968,0.000274,0.0004,***,-0.001506,-0.000431,Significant
+FF3,-0.000314,0.000269,0.2429,,-0.000841,0.000213,Not significant
+FF3_Mom,-0.000343,0.000273,0.2094,,-0.000878,0.000192,Not significant
+FF5_Mom,-0.000517,0.000277,0.0617,*,-0.001059,2.5e-05,Not significant
