@@ -10,7 +10,7 @@ Path("outputs/tables").mkdir(parents=True, exist_ok=True)
 with open("data/models.pkl", "rb") as f:
     models = pickle.load(f)
 
-with open("data/robust_models.pkl", "rb") as f:
+with open("data/clustered_models.pkl", "rb") as f:
     robust_models = pickle.load(f)
 
 def build_alpha_table():

@@ -1,0 +1,5 @@
+Model,BP Stat,BP p-val,BP Result,White Stat,White p-value,White Result
+CAPM,82.7456,0,Detected,835.2602,0.0,Detected
+FF3,176.5796,0,Detected,1596.3703,0.0,Detected
+FF3_Mom,184.6364,0,Detected,1631.9209,0.0,Detected
+FF5_Mom,339.2323,0,Detected,1738.0135,0.0,Detected

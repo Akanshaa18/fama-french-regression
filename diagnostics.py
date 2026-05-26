@@ -20,43 +20,72 @@ residuals = final_model.resid
 
 def plot_resid_vs_fitted():
     """plot linearity: residual vs fitted values"""
-    plt.figure(figsize=(8,5))
-    plt.scatter(fitted, residuals, alpha=0.5, s=5, color='green')
-    plt.axhline(0, color= 'red', linewidth=1)
-    plt.xlabel("Fitted values")
-    plt.ylabel("Residuals")
-    plt.title("Residuals vs Fitted values for FF5+ Momentum")
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+    axes = axes.flatten()
+
+    for i, (name, model) in enumerate(models.items()):
+        axes[i].scatter(model.fittedvalues, model.resid, 
+                    alpha=0.1, s=3, color='steelblue')
+        axes[i].axhline(0, color='red', linewidth=1)
+        axes[i].set_title(f"Residuals vs Fitted — {name}")
+        axes[i].set_xlabel("Fitted Values")
+        axes[i].set_ylabel("Residuals")
+
     plt.tight_layout()
-    plt.savefig("outputs/figures/residuals_vs_fitted.png", dpi=500)
-    print("saved residuals_vs_fitted.png")
+    plt.savefig("outputs/figures/residuals_all_models.png", dpi=150)
+    plt.show()
 
 
 def test_heteroskedasticity():
     """
     test heteroskedasticity using Breusch Pagan and White tests
     """
-    X = final_model.model.exog
-    resid = final_model.resid
+    rows = []
+    detected = False
+    
+    for name, model in models.items():
 
-    #Breusch Pagan
-    bp_stat, bp_pval, _, _ = het_breuschpagan(resid, X)
-    #White test
-    wh_stat, wh_pval, _, _ = het_white(resid, X)
+        X = model.model.exog
+        resid = model.resid
 
-    print("Testing heteroskedasticity")
-    print(f"Breusch Pagan: stat={bp_stat:.4f}, p={bp_pval:.4f}")
-    print(f"{'Heteroskedasticity detected' if bp_pval < 0.05 else 'No evidence'}")
-    print(f"White Test:stat={wh_stat:.4f}, p={wh_pval:.4f} ")
-    print(f"{'Heteroskedasticity detected' if wh_pval < 0.05 else '→ No evidence'}")
+        #Breusch Pagan
+        bp_stat, bp_pval, _, _ = het_breuschpagan(resid, X)
+        #White test
+        wh_stat, wh_pval, _, _ = het_white(resid, X)
+
+        bp_detected = bp_pval<0.05
+        wh_detected = wh_pval<0.05
+
+        if bp_detected or wh_detected:
+            detected = True
+        rows.append({
+            "Model": name,
+            "BP Stat": round(bp_stat, 4),
+            "BP p-val": round(bp_pval),
+            "BP Result":    "Detected" if bp_detected else "No evidence",
+            "White Stat":   round(wh_stat, 4),
+            "White p-value": round(wh_pval, 4),
+            "White Result": "Detected" if wh_detected else "No evidence",
+        })
+    table = pd.DataFrame(rows)
+
+    print("\nHeteroskedasticity Tests Across All Models:")
+    print(table.to_string(index=False))
+    table.to_csv("outputs/tables/heteroskedasticity_tests.csv", index=False)
 
     # if heteroskedasticity detected, then refit models with robust SEs
-    if bp_pval<0.05 or wh_pval<0.05:
-        print("Refitting all models with HC3 robust standard errors")
-        robust_models = {}
-        for name, model in models.items():
-            robust_models[name] = model.get_robustcov_results(cov_type='HC3')
-        return robust_models
-    return None
+    robust_models = None
+    if detected:
+        print("\nHeteroskedasticity detected — refitting all models with HC3 robust SEs")
+        robust_models = {
+            name: model.get_robustcov_results(cov_type='HC3')
+            for name, model in models.items()
+        }
+        with open("data/robust_models.pkl", "wb") as f:
+            pickle.dump(robust_models, f)
+        print("Saved robust_models.pkl")
+
+    return robust_models
 
 def test_normality():
     """testing normality using Q-Q plot and Jarque-Bera"""
@@ -69,13 +98,24 @@ def test_normality():
     plt.savefig("outputs/figures/qq_plot.png", dpi = 150)
 
     #jarque-bera
-    jb_stat, jb_pval, skew, kurtosis = jarque_bera(residuals)
-    print("\nNormality Test (Jarque-Bera)")
-    print(f"JB Stat:  {jb_stat:.4f}")
-    print(f"P-value:  {jb_pval:.4f}  "
-          f"{'Non-normal residuals' if jb_pval < 0.05 else 'Normal residuals'}")
-    print(f"Skewness: {skew:.4f}")
-    print(f"Kurtosis: {kurtosis:.4f}")
+    rows = []
+    for name, model in models.items():
+
+        jb_stat, jb_pval, skew, kurtosis = jarque_bera(model.resid)
+        rows.append({
+            "JB Stat":  round(jb_stat,4),
+            "P-value":  round(jb_pval,4),
+            "Skewness":  round(skew, 4),
+            "Kurtosis":  round(kurtosis, 4),
+            "Result":    "Non-normal" if jb_pval < 0.05 else "Normal"
+        })
+    table = pd.DataFrame(rows)
+    print("\nJarque-Bera Normality Tests Across All Models:")
+    print(table.to_string(index=False))
+    table.to_csv("outputs/tables/normality_tests.csv", index=False)
+    print("Saved normality_tests.csv")
+
+    return table
 
 def vif():
     """compute variance inflation factors"""
@@ -130,6 +170,6 @@ if __name__ == "__main__":
     if robust_models:
         with open("data/robust_models.pkl", "wb") as f:
             pickle.dump(robust_models, f)
-    test_normality()
+    jb_table = test_normality()
     vif()
     plot_cooks_dist()

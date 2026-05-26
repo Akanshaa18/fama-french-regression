@@ -65,6 +65,17 @@ def fit_model():
         models[name] = sm.OLS(Y,X).fit()
     return models
 
+def fit_clustered_models(models):
+    """refit all models with standard erros clustered by stock"""
+    clustered ={}
+    for name, model in models.items():
+        clustered[name]=model.get_robustcov_results(
+            cov_type='cluster',
+            groups=paneldf['ticker']
+        )
+    return clustered
+
+
 def f_test(models):
     """run incremental F-tests for nested model comparisons"""
     tests = [
@@ -102,6 +113,12 @@ if __name__ == "__main__":
     res = f_test(models)
     with open("data/models.pkl", "wb") as f:
         pickle.dump(models, f)
+
+    #Fit and save clustered models
+    clustered_models = fit_clustered_models(models)
+    with open("data/clustered_models.pkl", "wb") as f:
+        pickle.dump(clustered_models, f)
+    print("Saved clustered_models.pkl")
         
 
 
